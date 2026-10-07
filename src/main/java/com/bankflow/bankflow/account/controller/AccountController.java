@@ -5,6 +5,7 @@ import com.bankflow.bankflow.account.dto.AccountResponse;
 import com.bankflow.bankflow.account.dto.DepositRequest;
 import com.bankflow.bankflow.account.dto.TransferRequest;
 import com.bankflow.bankflow.account.dto.WithdrawRequest;
+import com.bankflow.bankflow.account.service.AccountCommandFacade;
 import com.bankflow.bankflow.account.service.AccountService;
 import com.bankflow.bankflow.transaction.dto.TransactionResponse;
 import jakarta.validation.Valid;
@@ -19,7 +20,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AccountController {
 
+    private static final String IDEMPOTENCY_KEY = "Idempotency-Key";
+
     private final AccountService accountService;
+    private final AccountCommandFacade accountCommandFacade;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -42,29 +46,34 @@ public class AccountController {
     @PostMapping("/{accountNumber}/deposit")
     public AccountResponse deposit(
             @PathVariable String accountNumber,
-            @Valid @RequestBody DepositRequest request
+            @Valid @RequestBody DepositRequest request,
+            @RequestHeader(value = IDEMPOTENCY_KEY, required = false) String idempotencyKey
     ) {
-        return accountService.deposit(
+        return accountCommandFacade.deposit(
                 accountNumber,
-                request.amount()
+                request.amount(),
+                idempotencyKey
         );
     }
 
     @PostMapping("/{accountNumber}/withdraw")
     public AccountResponse withdraw(
             @PathVariable String accountNumber,
-            @Valid @RequestBody WithdrawRequest request
+            @Valid @RequestBody WithdrawRequest request,
+            @RequestHeader(value = IDEMPOTENCY_KEY, required = false) String idempotencyKey
     ) {
-        return accountService.withdraw(
+        return accountCommandFacade.withdraw(
                 accountNumber,
-                request.amount()
+                request.amount(),
+                idempotencyKey
         );
     }
 
     @PostMapping("/transfer")
     public AccountResponse transfer(
-            @Valid @RequestBody TransferRequest request
+            @Valid @RequestBody TransferRequest request,
+            @RequestHeader(value = IDEMPOTENCY_KEY, required = false) String idempotencyKey
     ) {
-        return accountService.transfer(request);
+        return accountCommandFacade.transfer(request, idempotencyKey);
     }
 }

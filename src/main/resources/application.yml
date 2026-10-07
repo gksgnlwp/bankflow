@@ -12,3 +12,12 @@ spring:
       hibernate:
         format_sql: true
     open-in-view: false
+
+bankflow:
+  lock:
+    strategy: db        # db: DB 비관적 락만 사용 / redis: Redis 분산 락 + DB 락
+    lease-time: 3s
+    wait-time: 5s
+  idempotency:
+    enabled: false      # true면 Idempotency-Key 헤더로 중복 요청 차단 (Redis 필요)
+    ttl: 24h

@@ -25,10 +25,15 @@ const TYPE_LABEL = {
 
 const TAB_LABEL = { deposit: '입금하기', withdraw: '출금하기', transfer: '이체하기' };
 
+// 같은 거래를 다시 보내면(재시도·중복 제출) 서버가 한 번만 처리하도록 붙이는 키.
+// 거래가 끝나거나 입력이 바뀌면 새 키를 만든다.
+let idempotencyKey = null;
+const resetIdempotencyKey = () => { idempotencyKey = null; };
+
 async function api(path, options = {}) {
   const res = await fetch(path, {
-    headers: { 'Content-Type': 'application/json' },
     ...options,
+    headers: { 'Content-Type': 'application/json', ...options.headers },
     body: options.body ? JSON.stringify(options.body) : undefined,
   });
   const data = await res.json().catch(() => null);
@@ -213,13 +218,17 @@ document.querySelectorAll('.tab').forEach((tab) => {
     $('to-field').classList.toggle('hidden', !isTransfer);
     $('action-form').to.required = isTransfer;
     $('action-submit').textContent = TAB_LABEL[state.tab];
+    resetIdempotencyKey();
   });
 });
+
+$('action-form').addEventListener('input', resetIdempotencyKey);
 
 document.querySelectorAll('.quick button').forEach((btn) => {
   btn.addEventListener('click', () => {
     const input = $('action-form').amount;
     input.value = (Number(input.value) || 0) + Number(btn.dataset.add);
+    resetIdempotencyKey();
   });
 });
 
@@ -229,25 +238,29 @@ $('action-form').addEventListener('submit', async (e) => {
   const amount = Number(form.amount.value);
   const number = state.accountNumber;
   const submit = $('action-submit');
+  idempotencyKey ??= crypto.randomUUID();
+  const headers = { 'Idempotency-Key': idempotencyKey };
   submit.disabled = true;
 
   try {
     if (state.tab === 'deposit') {
-      await api(`/api/accounts/${number}/deposit`, { method: 'POST', body: { amount } });
+      await api(`/api/accounts/${number}/deposit`, { method: 'POST', headers, body: { amount } });
       toast(`${won(amount)}을 입금했습니다.`);
     } else if (state.tab === 'withdraw') {
-      await api(`/api/accounts/${number}/withdraw`, { method: 'POST', body: { amount } });
+      await api(`/api/accounts/${number}/withdraw`, { method: 'POST', headers, body: { amount } });
       toast(`${won(amount)}을 출금했습니다.`);
     } else {
       const to = form.to.value.trim();
       if (!confirm(`${to} 계좌로 ${won(amount)}을 이체할까요?`)) return;
       await api('/api/accounts/transfer', {
         method: 'POST',
+        headers,
         body: { fromAccountNumber: number, toAccountNumber: to, amount },
       });
       toast(`${to} 계좌로 ${won(amount)}을 이체했습니다.`);
     }
     form.reset();
+    resetIdempotencyKey();
     await loadAccounts();
   } catch (err) {
     toast(err.message, true);
