@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BankFlow</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="logo">B</span> BankFlow</div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <section class="panel">
+        <h2>고객</h2>
+        <ul id="user-list" class="user-list"></ul>
+        <p id="user-empty" class="muted hidden">등록된 고객이 없습니다.</p>
+      </section>
+
+      <section class="panel">
+        <h2>고객 등록</h2>
+        <form id="user-form" class="form">
+          <label>이름<input name="name" required maxlength="50" placeholder="홍길동"></label>
+          <label>이메일<input name="email" type="email" required placeholder="hong@example.com"></label>
+          <button type="submit" class="btn primary">등록</button>
+        </form>
+      </section>
+    </aside>
+
+    <main class="main">
+      <div id="welcome" class="empty-state">
+        <h1>환영합니다</h1>
+        <p class="muted">왼쪽에서 고객을 선택하거나 새로 등록하세요.</p>
+      </div>
+
+      <div id="user-view" class="hidden">
+        <div class="section-head">
+          <div>
+            <h1 id="user-name"></h1>
+            <p id="user-email" class="muted"></p>
+          </div>
+          <button id="open-account" class="btn primary">+ 계좌 개설</button>
+        </div>
+
+        <div id="account-list" class="account-grid"></div>
+        <p id="account-empty" class="muted hidden">아직 계좌가 없습니다. 계좌를 개설해 보세요.</p>
+
+        <section id="account-detail" class="detail hidden">
+          <div class="balance-card">
+            <div>
+              <p class="muted small">계좌번호</p>
+              <p id="detail-number" class="mono"></p>
+            </div>
+            <div class="right">
+              <p class="muted small">잔액</p>
+              <p id="detail-balance" class="balance"></p>
+            </div>
+          </div>
+
+          <div class="tabs" role="tablist">
+            <button class="tab active" data-tab="deposit" role="tab">입금</button>
+            <button class="tab" data-tab="withdraw" role="tab">출금</button>
+            <button class="tab" data-tab="transfer" role="tab">이체</button>
+          </div>
+
+          <form id="action-form" class="form action-form">
+            <label id="to-field" class="hidden">받는 계좌번호
+              <input name="to" list="account-options" placeholder="000-000-000000" autocomplete="off">
+              <datalist id="account-options"></datalist>
+            </label>
+            <label>금액 (원)
+              <input name="amount" type="number" min="1" step="1" required placeholder="10000">
+            </label>
+            <div class="quick">
+              <button type="button" data-add="10000">+1만</button>
+              <button type="button" data-add="50000">+5만</button>
+              <button type="button" data-add="100000">+10만</button>
+              <button type="button" data-add="1000000">+100만</button>
+            </div>
+            <button type="submit" id="action-submit" class="btn primary">입금하기</button>
+          </form>
+
+          <h2 class="history-title">거래 내역</h2>
+          <div class="table-wrap">
+            <table class="history">
+              <thead>
+                <tr><th>일시</th><th>구분</th><th>상대 계좌</th><th class="num">금액</th><th class="num">거래 후 잔액</th></tr>
+              </thead>
+              <tbody id="history-body"></tbody>
+            </table>
+          </div>
+          <p id="history-empty" class="muted hidden">거래 내역이 없습니다.</p>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="/app.js"></script>
+</body>
+</html>
